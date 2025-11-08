@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) void {
     const can_i_be_infinity = b.dependency("can_i_be_infinity", .{}).module("can_i_be_infinity");
 
     const exe = b.addExecutable(.{
-        .name = "bit_getter",
+        .name = "getbits",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
             .target = target,
