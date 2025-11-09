@@ -2,14 +2,7 @@ const std = @import("std");
 const infinity = @import("can_i_be_infinity");
 const fps = @import("fps.zig");
 const allocator_selector = @import("allocator.zig");
-
-const Actions = enum {
-    list_bits,
-    add_1,
-    add_10,
-    multiply_by_2,
-    help,
-};
+const actions = @import("actions.zig");
 
 pub fn main() !void {
     // Initialization
@@ -26,34 +19,19 @@ pub fn main() !void {
     var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
 
-    _ = args.skip();
+    const name = args.next();
     const command = args.next();
 
-    var action: Actions = .help;
+    var action: actions.Actions = .help;
 
-    if(command == null) {
-        action = .help;
-    }
-    else if(std.mem.eql(u8, command.?, "help")) {
-        action = .help;
-    }
-    else if(std.mem.eql(u8, command.?, "lb")) {
-        action = .list_bits;
-    }
-    else if(std.mem.eql(u8, command.?, "add1")) {
-        action = .add_1;
-    }
-    else if(std.mem.eql(u8, command.?, "add10")) {
-        action = .add_10;
-    }
-    else if(std.mem.eql(u8, command.?, "x2")) {
-        action = .multiply_by_2;
-    }
+    try actions.init(allocator);
+    defer actions.deinit(allocator);
+    action = try actions.actionByStringOrNull(command, allocator);
 
-    try run(action);
+    try run(action, name.?);
 }
 
-fn run(action: Actions) !void {
+fn run(action: actions.Actions, binary_name: []const u8) !void {
     // Setting some writing stuff
     var buff: [1024]u8 = undefined;
     var stdout_file = std.fs.File.stdout();
@@ -69,19 +47,21 @@ fn run(action: Actions) !void {
         .add_10 => bits += 10,
         .multiply_by_2  => bits *= 2,
         .help => {
-            try stdout.print("Usage: getbits <COMMAND> <SUBCOMMAND> [VALUE]... \n", .{});
+            try stdout.print("Usage: {s} <COMMAND> <SUBCOMMAND> [VALUE]... \n", .{binary_name});
             try stdout.print("COMMANDs: \n", .{});
             try stdout.print("\tlb - list bits\n", .{});
             try stdout.print("\tx2 - multiply by 2\n", .{});
             try stdout.print("\tadd10 - add 10\n", .{});
             try stdout.print("\tadd1 - add 1\n", .{});
             try stdout.print("\thelp - show this message and exit\n", .{});
+            try stdout.flush();
         },
         .list_bits => {
             try stdout.print("You have {} bits!\n", .{bits});
+            try stdout.flush();
         }
     }
-    try stdout.flush();
+
 
     return;
 }
