@@ -41,7 +41,7 @@ fn run(action: actions.Actions, binary_name: []const u8, allocator: std.mem.Allo
 
     std.log.debug("Performing {t}.", .{action});
 
-    bit.restoreProgress();
+    try bit.restoreProgress(allocator);
 
     switch (action) {
         .help => {
