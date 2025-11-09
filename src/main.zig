@@ -3,6 +3,7 @@ const infinity = @import("can_i_be_infinity");
 const fps = @import("fps.zig");
 const allocator_selector = @import("allocator.zig");
 const actions = @import("actions.zig");
+const bit = @import("bits.zig");
 
 pub fn main() !void {
     // Initialization
@@ -28,10 +29,10 @@ pub fn main() !void {
     defer actions.deinit(allocator);
     action = try actions.actionByStringOrNull(command, allocator);
 
-    try run(action, name.?);
+    try run(action, name.?, allocator);
 }
 
-fn run(action: actions.Actions, binary_name: []const u8) !void {
+fn run(action: actions.Actions, binary_name: []const u8, allocator: std.mem.Allocator) !void {
     // Setting some writing stuff
     var buff: [1024]u8 = undefined;
     var stdout_file = std.fs.File.stdout();
@@ -40,28 +41,35 @@ fn run(action: actions.Actions, binary_name: []const u8) !void {
 
     std.log.debug("Performing {t}.", .{action});
 
-    var bits: f32 = 1321;
+    bit.restoreProgress();
 
     switch (action) {
-        .add_1  => bits += 1,
-        .add_10 => bits += 10,
-        .multiply_by_2  => bits *= 2,
         .help => {
             try stdout.print("Usage: {s} <COMMAND> <SUBCOMMAND> [VALUE]... \n", .{binary_name});
             try stdout.print("COMMANDs: \n", .{});
-            try stdout.print("\tlb - list bits\n", .{});
-            try stdout.print("\tx2 - multiply by 2\n", .{});
-            try stdout.print("\tadd10 - add 10\n", .{});
-            try stdout.print("\tadd1 - add 1\n", .{});
-            try stdout.print("\thelp - show this message and exit\n", .{});
+            try stdout.print("\tlb, ls - show your bit count.\n", .{});
+            try stdout.print("\thelp, h - show this message and exit.\n", .{});
+            try stdout.print("\tt, tick - calculate bits for one second.\n", .{});
+            try stdout.print("\ttc, tick_cont - calculate bits for one second.\n", .{});
             try stdout.flush();
         },
         .list_bits => {
-            try stdout.print("You have {} bits!\n", .{bits});
+            try stdout.print("You have {} bits!\n", .{bit.getBits()});
             try stdout.flush();
+        },
+        .tick => {
+            try stdout.print("Ticking...\n", .{});
+            try stdout.flush();
+            std.Thread.sleep(std.time.ns_per_s);
+            bit.tick(1.0);
+            try stdout.print("You have {} bits!\n", .{bit.getBits()});
+            try stdout.flush();
+        },
+        .tick_cont => {
+            try stdout.print("Sorry, this is just a placehorder.", .{});
         }
     }
 
-
+    try bit.saveProgress(allocator);
     return;
 }

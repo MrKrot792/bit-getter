@@ -4,27 +4,14 @@ const std = @import("std");
 
 pub const Actions = enum {
     list_bits,
-    add_1,
-    add_10,
-    multiply_by_2,
     help,
+    tick,
+    tick_cont,
 };
 
 var asociatedActions: std.EnumArray(Actions, std.ArrayList([]const u8)) = .initUndefined();
 
 pub fn init(allocator: std.mem.Allocator) !void {
-    var add_1_list: [][]const u8 = try allocator.alloc([]const u8, 3);
-    add_1_list[0] = "add_1";
-    add_1_list[1] = "add1";
-    add_1_list[2] = "a1";
-    asociatedActions.set(.add_1, .fromOwnedSlice(add_1_list));
-
-    var add_10_list: [][]const u8 = try allocator.alloc([]const u8, 3);
-    add_10_list[0] = "add_10";
-    add_10_list[1] = "add10";
-    add_10_list[2] = "a10";
-    asociatedActions.set(.add_10, .fromOwnedSlice(add_10_list));
-
     var help_list: [][]const u8 = try allocator.alloc([]const u8, 4);
     help_list[0] = "help";
     help_list[1] = "--help";
@@ -39,11 +26,15 @@ pub fn init(allocator: std.mem.Allocator) !void {
     list_bits_list[3] = "list";
     asociatedActions.set(.list_bits, .fromOwnedSlice(list_bits_list));
 
-    var multiply_by_2_list: [][]const u8 = try allocator.alloc([]const u8, 2);
-    multiply_by_2_list[0] = "x2";
-    multiply_by_2_list[1] = "m2";
+    var tick_list: [][]const u8 = try allocator.alloc([]const u8, 2);
+    tick_list[0] = "tick";
+    tick_list[1] = "t";
+    asociatedActions.set(.tick, .fromOwnedSlice(tick_list));
 
-    asociatedActions.set(.multiply_by_2, .fromOwnedSlice(multiply_by_2_list));
+    var tick_cont_list: [][]const u8 = try allocator.alloc([]const u8, 2);
+    tick_cont_list[0] = "tick_cont";
+    tick_cont_list[1] = "tc";
+    asociatedActions.set(.tick_cont, .fromOwnedSlice(tick_cont_list));
 }
 
 /// Deiniting every list...
