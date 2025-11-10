@@ -15,7 +15,7 @@ Maybe someday, you'll find some... *interesting* data about something...
 ```bash
 git clone https://github.com/MrKrot792/bit-getter
 cd bit-getter
-zig build -p=<your-prefix (usually /usr/bin)>
+zig build -p=<your-prefix (usually /usr/local/bin)>
 ```
 
 # Contributing
