@@ -26,7 +26,7 @@ pub fn main() !void {
 }
 
 fn run(command: ?[]const u8, binary_name: []const u8, allocator: std.mem.Allocator) !void {
-    try actions.init(allocator);
+    try actions.init(allocator, binary_name);
     defer actions.deinit(allocator);
     actions.execute(command, allocator) catch |err| switch (err) {
         actions.Error.command_not_found => {
@@ -38,7 +38,4 @@ fn run(command: ?[]const u8, binary_name: []const u8, allocator: std.mem.Allocat
 
         else => return err
     };
-
-    _ = binary_name;
-    return;
 }

@@ -6,21 +6,24 @@ const bit = @import("bits.zig");
 const command = struct {
     command: []const u8,
     description: []const u8,
+    subcommand: ?[]const u8 = null,
+
     function: *const fn (std.mem.Allocator, *std.Io.Writer) anyerror!void,
 };
 
+var name: []u8 = undefined;
 var commands: std.ArrayList(command) = .empty;
 
-pub fn init(allocator_outer: std.mem.Allocator) !void {
+pub fn init(allocator_outer: std.mem.Allocator, name_outer: []const u8) !void {
     try commands.append(allocator_outer, .{ 
         .command = "help",
-        .description = "show this help",
+        .description = "Show this help.",
         .function = &helpCommand,
     });
 
     try commands.append(allocator_outer, .{ 
         .command = "ls",
-        .description = "list your bits",
+        .description = "List your bits.",
         .function = struct {
             fn f(allocator: std.mem.Allocator, stdout: *std.Io.Writer) anyerror!void {
                 try bit.restoreProgress(allocator);
@@ -35,7 +38,7 @@ pub fn init(allocator_outer: std.mem.Allocator) !void {
 
     try commands.append(allocator_outer, .{ 
         .command = "tick",
-        .description = "runs the simulation for 1 second",
+        .description = "Runs the simulation for 1 second.",
         .function = struct {
             fn f(allocator: std.mem.Allocator, stdout: *std.Io.Writer) anyerror!void {
                 try bit.restoreProgress(allocator);
@@ -56,10 +59,13 @@ pub fn init(allocator_outer: std.mem.Allocator) !void {
             }
         }.f,
     });
+
+    name = try allocator_outer.dupe(u8, name_outer);
 }
 
 pub fn deinit(allocator: std.mem.Allocator) void {
     commands.deinit(allocator);
+    allocator.free(name);
 }
 
 pub fn execute(command_to_execute: ?[]const u8, allocator: std.mem.Allocator) anyerror!void {
@@ -86,7 +92,17 @@ pub fn execute(command_to_execute: ?[]const u8, allocator: std.mem.Allocator) an
 
 fn helpCommand(allocator: std.mem.Allocator, stdout: *std.Io.Writer) anyerror!void {
     _ = allocator;
-    try stdout.print("Placehorder for help!\n", .{});
+
+    try stdout.print("Usage: {s} <command> <sub-command> [args]\n", .{name});
+    try stdout.print("Commands: \n", .{});
+    for (commands.items) |value| {
+        if(value.subcommand == null) {
+            try stdout.print("    {s} - {s}\n", .{value.command, value.description});
+        } else {
+            try stdout.print("    {s}, {s} - {s}\n", .{value.command, value.subcommand.?, value.description});
+        }
+    }
+
     try stdout.flush();
 }
 
