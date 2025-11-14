@@ -2,7 +2,7 @@ const std = @import("std");
 const infinity = @import("can_i_be_infinity");
 const fps = @import("fps.zig");
 const allocator_selector = @import("allocator.zig");
-const actions = @import("actions.zig");
+const actions = @import("cli/actions.zig");
 
 pub fn main() !void {
     // Initialization
