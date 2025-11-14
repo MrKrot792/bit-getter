@@ -1,74 +1,95 @@
 //! This file requiers rewrite.
 //! ...but I can do it later, right?
 const std = @import("std");
+const bit = @import("bits.zig");
 
-pub const Actions = enum {
-    list_bits,
-    help,
-    tick,
-    tick_cont,
+const command = struct {
+    command: []const u8,
+    description: []const u8,
+    function: *const fn (std.mem.Allocator, *std.Io.Writer) anyerror!void,
 };
 
-var asociatedActions: std.EnumArray(Actions, std.ArrayList([]const u8)) = .initUndefined();
+var commands: std.ArrayList(command) = .empty;
 
-pub fn init(allocator: std.mem.Allocator) !void {
-    var help_list: [][]const u8 = try allocator.alloc([]const u8, 4);
-    help_list[0] = "help";
-    help_list[1] = "--help";
-    help_list[2] = "-h";
-    help_list[3] = "h";
-    asociatedActions.set(.help, .fromOwnedSlice(help_list));
+pub fn init(allocator_outer: std.mem.Allocator) !void {
+    try commands.append(allocator_outer, .{ 
+        .command = "help",
+        .description = "show this help",
+        .function = &helpCommand,
+    });
 
-    var list_bits_list: [][]const u8 = try allocator.alloc([]const u8, 4);
-    list_bits_list[0] = "ls";
-    list_bits_list[1] = "lb";
-    list_bits_list[2] = "l";
-    list_bits_list[3] = "list";
-    asociatedActions.set(.list_bits, .fromOwnedSlice(list_bits_list));
+    try commands.append(allocator_outer, .{ 
+        .command = "ls",
+        .description = "list your bits",
+        .function = struct {
+            fn f(allocator: std.mem.Allocator, stdout: *std.Io.Writer) anyerror!void {
+                try bit.restoreProgress(allocator);
 
-    var tick_list: [][]const u8 = try allocator.alloc([]const u8, 2);
-    tick_list[0] = "tick";
-    tick_list[1] = "t";
-    asociatedActions.set(.tick, .fromOwnedSlice(tick_list));
+                try stdout.print("You have {}B!\n", .{bit.getBits()});
+                try stdout.flush();
 
-    var tick_cont_list: [][]const u8 = try allocator.alloc([]const u8, 2);
-    tick_cont_list[0] = "tick_cont";
-    tick_cont_list[1] = "tc";
-    asociatedActions.set(.tick_cont, .fromOwnedSlice(tick_cont_list));
-}
-
-/// Deiniting every list...
-pub fn deinit(allocator: std.mem.Allocator) void {
-    var iterator = asociatedActions.iterator();
-
-    while (true) {
-        const next = iterator.next();
-        if(next == null) break;
-
-        next.?.value.deinit(allocator);
-    }
-}
-
-pub fn actionByString(str: []const u8, allocator: std.mem.Allocator) !Actions {
-    var i = asociatedActions.iterator();
-
-    while (true) {
-        const next = i.next();
-        if(next == null) break;
-
-        for(next.?.value.items) |value| {
-            const buf: []u8 = try allocator.alloc(u8, value.len);
-            defer allocator.free(buf);
-            if(std.mem.eql(u8, std.ascii.lowerString(buf, value), str)) {
-                return next.?.key;
+                try bit.saveProgress(allocator);
             }
+        }.f,
+    });
+
+    try commands.append(allocator_outer, .{ 
+        .command = "tick",
+        .description = "runs the simulation for 1 second",
+        .function = struct {
+            fn f(allocator: std.mem.Allocator, stdout: *std.Io.Writer) anyerror!void {
+                try bit.restoreProgress(allocator);
+
+                try stdout.print("Ticking...\n", .{});
+                try stdout.flush();
+
+                std.Thread.sleep(std.time.ns_per_s);
+                bit.tick(1.0);
+
+                try stdout.print("Done!\n", .{});
+                try stdout.flush();
+
+                try stdout.print("Now you have {e}B!\n", .{bit.getBits()});
+                try stdout.flush();
+
+                try bit.saveProgress(allocator);
+            }
+        }.f,
+    });
+}
+
+pub fn deinit(allocator: std.mem.Allocator) void {
+    commands.deinit(allocator);
+}
+
+pub fn execute(command_to_execute: ?[]const u8, allocator: std.mem.Allocator) anyerror!void {
+    var buf: [1024]u8 = undefined;
+    const stdout_file = std.fs.File.stdout();
+    var writer = stdout_file.writer(&buf);
+    const stdout = &writer.interface;
+
+    if (command_to_execute == null) { 
+        try helpCommand(allocator, stdout); 
+        return; 
+    }
+
+    for (commands.items) |value| {
+        if(!std.mem.eql(u8, command_to_execute.?, value.command)) { continue; }
+        else {
+            try value.function(allocator, stdout);
+            return;
         }
     }
 
-    return .help;
+    return Error.command_not_found;
 }
 
-pub fn actionByStringOrNull(str: ?[]const u8, allocator: std.mem.Allocator) !Actions {
-    if(str == null) return .help 
-    else return try actionByString(str.?, allocator);
+fn helpCommand(allocator: std.mem.Allocator, stdout: *std.Io.Writer) anyerror!void {
+    _ = allocator;
+    try stdout.print("Placehorder for help!\n", .{});
+    try stdout.flush();
 }
+
+pub const Error = error {
+    command_not_found
+};
