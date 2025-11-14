@@ -8,6 +8,8 @@ Get bits, get *useful* bits, or even *extremelly useful* bits! All can be used t
 
 Maybe someday, you'll find some... *interesting* data about something...
 
+The rough overview on what is planned can be found [here](commands.md)!
+
 # Installing
 > [!IMPORTANT]
 > Bash, git and zig are necessary.
