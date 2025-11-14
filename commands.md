@@ -38,6 +38,8 @@ Your bits are increasing by 1.5x every second!
 You've already produced 5.4e85B.
 ```
 
+> [!IMPORTANT]
+> Work In Progress
 # Global params
 ## --script
 `[--script]` - makes the game script-compatible, so this:
@@ -67,8 +69,6 @@ A1 1.35e3 1e21UB
 $ 
 ```
 
-> [!IMPORTANT]
-> Work In Progress
 ## --json
 `[--json]` - outputs data in json.
 
