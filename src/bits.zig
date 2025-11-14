@@ -20,6 +20,7 @@ const SaveStructure = struct {
     current_time: i64,
 };
 
+/// Tick is in seconds
 pub fn tick(delta: f64) void {
     bits += bit_mining_speed * delta;
     bit_mining_speed += bit_mining_mining_speed * delta;
@@ -41,7 +42,21 @@ pub fn restoreProgress(allocator: std.mem.Allocator) !void {
     allocator.free(text);
     defer allocator.free(textZ);
 
-    const result = try std.zon.parse.fromSlice(SaveStructure, allocator, textZ, null, .{});
+    const result = std.zon.parse.fromSlice(SaveStructure, allocator, textZ, null, .{}) catch |err| switch (err) {
+        error.ParseZon => {
+            if((try save_file.stat()).size == 0) {
+                std.log.warn("The save file was empty.", .{});
+            } else {
+                std.log.err("Failed to parse the save file.", .{});
+                std.process.exit(1);
+                return err;
+            }
+
+            return;
+        },
+
+        else => try std.zon.parse.fromSlice(SaveStructure, allocator, textZ, null, .{})
+    };
 
     bits = result.bits;
     bit_mining_speed = result.bits_m1;
