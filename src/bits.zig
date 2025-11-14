@@ -30,6 +30,10 @@ pub fn getBits() f64 {
     return bits;
 }
 
+pub fn setBits(new_bits: f64) void {
+    bits = new_bits;
+}
+
 pub fn restoreProgress(allocator: std.mem.Allocator) !void {
     var save_file = try getSaveFile(allocator);
     defer save_file.close();
