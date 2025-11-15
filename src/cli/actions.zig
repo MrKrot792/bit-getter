@@ -78,44 +78,44 @@ pub fn init(allocator_outer: std.mem.Allocator, name_outer: []const u8) !void {
         }.f,
     });
 
-    if (builtin.mode == .Debug) {
-        const double_long_description: []const u8 = "Doubles your bits by <by>. <by> should be a float, takes in scientific notation. This actually will crash if the number is more than 1.7e308 (infinity).";
-        // This servers as a test for the argument parsing system.
-        try commands.append(allocator_outer, .{
-            .command = "double",
-            .description = "Doubles your bits by <by>.",
-            .long_description = double_long_description,
-            .subcommand = "<by>",
-            .function = struct {
-                fn f(allocator: std.mem.Allocator, stdout: *std.Io.Writer, command_ptr: command) anyerror!void {
-                    try bit.restoreProgress(allocator);
+    const double_long_description: []const u8 = "Doubles your bits by <by>. <by> should be a float, takes in scientific notation. This actually will crash if the number is more than 1.7e308 (infinity).";
+    // This servers as a test for the argument parsing system.
+    try commands.append(allocator_outer, .{
+        .command = "double",
+        .description = "Doubles your bits by <by>.",
+        .long_description = double_long_description,
+        .subcommand = "<by>",
+        .function = struct {
+            fn f(allocator: std.mem.Allocator, stdout: *std.Io.Writer, command_ptr: command) anyerror!void {
+                try bit.restoreProgress(allocator);
 
-                    const by_unparsed = args.getArgumentAt(0) catch |err| switch (err) {
-                        args.Error.TooFewArguments => {
-                            std.log.err("Too few arguments.", .{});
-                            try stdout.print("Usage: \n", .{});
-                            try printUsage(command_ptr, stdout);
-                            try stdout.flush();
-                            std.process.exit(1);
-                            return err;
-                        }
-                    };
+                const by_unparsed = args.getArgumentAt(0) catch |err| switch (err) {
+                    args.Error.TooFewArguments => {
+                        std.log.err("Too few arguments.", .{});
+                        try stdout.print("Usage: \n", .{});
+                        try printUsage(command_ptr, stdout);
+                        try stdout.flush();
+                        std.process.exit(1);
+                        return err;
+                    }
+                };
 
-                    std.log.debug("Parsing {s}...", .{by_unparsed});
-                    const by = try std.fmt.parseFloat(f64, by_unparsed);
+                std.log.debug("Parsing {s}...", .{by_unparsed});
+                const by = try std.fmt.parseFloat(f64, by_unparsed);
 
-                    bit.setBits(bit.getBits().mul(.of(by)));
+                bit.setBits(bit.getBits().mul(.of(by)));
 
-                    try stdout.print("You have ", .{});
-                    try bit.getBits().format(stdout);
-                    try stdout.print("B!\n", .{});
-                    try stdout.flush();
+                std.log.debug("{any}", .{bit.getBits()});
 
-                    try bit.saveProgress(allocator);
-                }
-            }.f,
-        });
-    }
+                try stdout.print("You have ", .{});
+                try bit.getBits().format(stdout);
+                try stdout.print("B!\n", .{});
+                try stdout.flush();
+
+                try bit.saveProgress(allocator);
+            }
+        }.f,
+    });
 
     name = try allocator_outer.dupe(u8, name_outer);
 }
