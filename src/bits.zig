@@ -36,7 +36,7 @@ pub fn setBits(new_bits: decimal.Decimal) void {
 }
 
 pub fn restoreProgress(allocator: std.mem.Allocator) !void {
-    var save_file = try getSaveFile(allocator);
+    var save_file = try getSaveFile(allocator, false);
     defer save_file.close();
 
     var buf: [1024]u8 = undefined;
@@ -70,7 +70,7 @@ pub fn restoreProgress(allocator: std.mem.Allocator) !void {
 }
 
 pub fn saveProgress(allocator: std.mem.Allocator) !void {
-    var save_file = try getSaveFile(allocator);
+    var save_file = try getSaveFile(allocator, true);
     defer save_file.close();
 
     const current_time = std.time.microTimestamp();
@@ -90,7 +90,7 @@ pub fn saveProgress(allocator: std.mem.Allocator) !void {
 }
 
 /// This function also creates directory and the save file if they do not exist
-fn getSaveFile(allocator: std.mem.Allocator) !std.fs.File {
+fn getSaveFile(allocator: std.mem.Allocator, truncate: bool) !std.fs.File {
     const path = try std.fs.getAppDataDir(allocator, "bit-getter");
     defer allocator.free(path);
 
@@ -104,7 +104,7 @@ fn getSaveFile(allocator: std.mem.Allocator) !std.fs.File {
 
     const save_file_path = try std.fs.path.join(allocator, &[_][]const u8{path, "/save.zon"});
     defer allocator.free(save_file_path);
-    const save_file = try save_dir.createFile(save_file_path, .{.truncate = true, .read = true});
+    const save_file = try save_dir.createFile(save_file_path, .{.truncate = truncate, .read = true});
 
     return save_file;
 }
