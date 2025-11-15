@@ -1,8 +1,9 @@
 const std = @import("std");
+pub const decimal = @import("can_i_be_infinity");
 
 /// Initially, you get 1 bit per second. 
 /// However, that speed can be updated.
-var bits: f64 = 0;
+var bits: decimal.Decimal = .zero;
 /// Per second.
 var bit_mining_speed: f64 = 1;
 /// Per second.
@@ -13,7 +14,7 @@ var time_passed: i64 = 0;
 /// `bits_m1` mines bits, `bits_m2` mines `bits_m1`, etc.
 const SaveStructure = struct {
     /// The amount of bits player currently has.
-    bits: f64,
+    bits: decimal.Decimal,
     bits_m1: f64,
     bits_m2: f64,
 
@@ -22,15 +23,15 @@ const SaveStructure = struct {
 
 /// Tick is in seconds
 pub fn tick(delta: f64) void {
-    bits += bit_mining_speed * delta;
+    bits = bits.add(decimal.Decimal.of(bit_mining_speed * delta));
     bit_mining_speed += bit_mining_mining_speed * delta;
 }
 
-pub fn getBits() f64 {
+pub fn getBits() decimal.Decimal {
     return bits;
 }
 
-pub fn setBits(new_bits: f64) void {
+pub fn setBits(new_bits: decimal.Decimal) void {
     bits = new_bits;
 }
 
@@ -103,7 +104,7 @@ fn getSaveFile(allocator: std.mem.Allocator) !std.fs.File {
 
     const save_file_path = try std.fs.path.join(allocator, &[_][]const u8{path, "/save.zon"});
     defer allocator.free(save_file_path);
-    const save_file = try save_dir.createFile(save_file_path, .{.truncate = false, .read = true});
+    const save_file = try save_dir.createFile(save_file_path, .{.truncate = true, .read = true});
 
     return save_file;
 }
